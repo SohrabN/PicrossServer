@@ -4,23 +4,30 @@ import java.net.*;
 import java.util.*;
 
 public class PircrossServer {
-    static Vector<User> clients=new Vector<User>(); /*list of users on open ports*/
-    static ServerSocket serverSocket;
+    private static Vector<Client> clients = new Vector<Client>(); /*list of users on open ports*/
+    private static Vector<Thread> threads = new Vector<Thread>();
+    private static ServerSocket serverSocket;
 
     public static void main(String[] args) {
 
         //Vector<Thread> clients = new Vector<Thread>();
         int defaultPortNum = 61001;
         boolean defaultPort = true;
-        int count=1;
+        int count = 1;
 
         try {
             if (args.length == 0) {
-                serverSocket = new ServerSocket(defaultPortNum);
+                try {
+                    serverSocket = new ServerSocket(defaultPortNum);
+                } catch (BindException e) {
+                    System.err.println("ERROR: Port is already in use. Please use a another port.");
+                }
             } else if (args.length == 1) {
                 try {
                     serverSocket = new ServerSocket(Integer.parseInt(args[0]));
                     defaultPort = false;
+                } catch (BindException e) {
+                    System.err.println("ERROR: Port is already in use. Please use a another port.");
                 } catch (Exception e) {
                     System.err.println("ERROR: Invalid port number: " + args[0]);
                     serverSocket = new ServerSocket(defaultPortNum);
@@ -34,91 +41,68 @@ public class PircrossServer {
                 System.out.println("Now listening to port: " + String.valueOf(defaultPortNum));
             else
                 System.out.println("Now listening to port: " + args[0]);
-            Thread check = new Thread(){
-                public void run(){
-                    while (true){
-//                        for (int i = 0; i < clients.size(); i++) {
-//                            if (!clients.get(i).isAlive()) {
-//                                clients.remove(i);
-////                                System.out.println("vector "+i+" is removed");
-//                            }
-//                        }
-                    }
-                }
-            };
-            check.start();
+
             while (true) {
-                int finalCount = count;
-                ServerSocket finalS = serverSocket;
-                Thread t = new Thread() {
-                    Socket clientSocket = finalS.accept();
-                    public void run() {
-                        System.out.println("Inbound connection #"+ finalCount);
-                        try (
-                                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                                Scanner in = new Scanner(clientSocket.getInputStream());
 
-
-
-                        ) {
-                            String userName = in.nextLine();
-                            System.out.println(userName + " has connected.\n");
-                            out.println("Welcome to OHello Server!");
-                            while (in.hasNextLine()) {
-                                String input = in.nextLine();
-                                if (input.equalsIgnoreCase("exit")) {
-                      //              vector.remove(finalCount);
-                                    break;
-                                }
-
-                                System.out.println(input);
-
-                            }
-                        } catch (IOException e) { }
-                    }
-                };
-
+                Socket clientSocket = serverSocket.accept();
+                InputStream inStream = clientSocket.getInputStream();
+                Scanner in = new Scanner(inStream);
+                String userName = in.nextLine();
+                System.out.println("Inbound connection #" + count);
+                System.out.println(userName + " has connected.\n");
+                sendMessageToAll("SERVER: " + userName + "has joined the server");
+                Client newUser = new Client(clientSocket, userName);
+                clients.add(newUser);
                 count++;
-                t.start();
-                //clients.add(t);
-
+                Thread thread = new Thread(newUser);
+                thread.start();
+                threads.add(thread);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public void sendServerMessagesAway(String message) {
-        for (User client : this.clients) {
-            client.passMessage().println(this.clients);
+
+    public static void sendMessageToAll(String message) {
+        for (int i = 0; i < clients.size(); i++) {
+            clients.elementAt(i).sendMessage().println(clients);
         }
 
     }
 }
-class User {
-    PrintStream streamOut; /*messages comming from server to ports*/
-    InputStream streamIn; /*messages coming from ports to server*/
-    String userName;
 
+class Client implements Runnable {
 
-    /*constructor to send and recive messages on right socket*/
-    public User(Socket client, String name) throws IOException {
-        this.streamOut = new PrintStream(client.getOutputStream());
-        this.streamIn = client.getInputStream();
-        this.userName = name;
+    private PrintStream outSteam;
+    private InputStream inStream;
+    private String userName;
+
+    public Client(Socket clientSocket, String userName) {
+        try {
+            outSteam = new PrintStream(clientSocket.getOutputStream());
+        } catch (IOException e) {
+            System.err.println("Server was not able to get OutputSteam for user " + userName);
+        }
+        try {
+            inStream = clientSocket.getInputStream();
+        } catch (IOException e) {
+            System.err.println("Server was not able to get InputSteam for user " + userName);
+        }
+        this.userName = userName;
     }
 
     /********************************************************************************
      Function name:		changeName
      purpose				change name of user
-     @version			1.0
-     @author 			Asim Jasarevic
+     @version 1.0
+     @author Asim Jasarevic
      ********************************************************************************/
-    public void changeName(String name){
+    public void changeName(String name) {
 
         String preName = this.userName;
         String parsedName = name;
-        parsedName = parsedName.replace("/name (","");
-        parsedName = parsedName.replace(")","");
+        parsedName = parsedName.replace("/name (", "");
+        parsedName = parsedName.replace(")", "");
 
         this.userName = parsedName;
         this.passMessage().println(preName + " name changed to " + parsedName);
@@ -131,10 +115,10 @@ class User {
     /********************************************************************************
      Function name:		DisconnectUser
      purpose				print out user has been diconected (kick action happens in run())
-     @version			1.0
-     @author 			Asim Jasarevic
+     @version 1.0
+     @author Asim Jasarevic
      ********************************************************************************/
-    public void DisconnectUser(){
+    public void DisconnectUser() {
 
         String preName = this.userName;
         System.out.println(preName + " has disconnected");
@@ -145,41 +129,45 @@ class User {
     /********************************************************************************
      Function name:		passMessage
      purpose				get messages and pass it to gui
-     @version			1.0
-     @author 			Asim Jasarevic
+     @version 1.0
+     @author Asim Jasarevic
      ********************************************************************************/
-    public PrintStream passMessage(){
+    public PrintStream sendMessage() {
         return this.streamOut;
     }
 
     /********************************************************************************
      Function name:		InputStream
      purpose				get text in text field in gui
-     @version			1.0
-     @author 			Asim Jasarevic
+     @version 1.0
+     @author Asim Jasarevic
      ********************************************************************************/
-    public InputStream getTextField(){
+    public InputStream getTextField() {
         return this.streamIn;
     }
 
     /********************************************************************************
      Function name:		getUsername
      purpose				get username of user
-     @version			1.0
-     @author 			Asim Jasarevic
+     @version 1.0
+     @author Asim Jasarevic
      ********************************************************************************/
-    public String getUsername(){
+    public String getUsername() {
         return this.userName;
     }
 
     /********************************************************************************
      Function name:		toString
      purpose				print username besides message
-     @version			1.0
-     @author 			Asim Jasarevic
+     @version 1.0
+     @author Asim Jasarevic
      ********************************************************************************/
-    public String toString(){
+    public String toString() {
         return (this.getUsername());
     }
 
+    @Override
+    public void run() {
+
+    }
 }
