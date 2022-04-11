@@ -8,9 +8,16 @@ public class PicrossServer {
     private static ServerSocket serverSocket;
     private int count = 1;
     private String currentGame;
-    private static int clientsCount=0;
-    public static Vector<Client>getClients(){
+    private static int clientsCount = 0;
+    private static Socket clientSocket = null;
+    private static boolean flagFirstRun = true;
+
+    public static Vector<Client> getClients() {
         return clients;
+    }
+
+    public static Socket getClientSocket() {
+        return clientSocket;
     }
 
     public static void main(String[] args) {
@@ -52,8 +59,6 @@ public class PicrossServer {
 
     public void startServer() {
         while (true) {
-
-            Socket clientSocket = null;
             try {
                 clientSocket = serverSocket.accept();
             } catch (IOException e) {
@@ -70,14 +75,42 @@ public class PicrossServer {
             System.out.println("Inbound connection #" + count);
             System.out.println(userName + " has connected.");
             sendMessageToAll("SERVER: " + userName + " has joined the server.");
-            Client newUser = new Client(clientSocket, userName, this);
+            Client newUser = new Client(clientSocket, userName, this,clientSocket);
             clients.add(newUser);
             clientsCount++;
             count++;
             Thread thread = new Thread(newUser);
             thread.start();
             threads.add(thread);
-
+            if (flagFirstRun) {
+                Thread newThread = new Thread() {
+                    @Override
+                    public void run() {
+                        super.run();
+                        while (true) {
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            if (threads.size() != 0) {
+                                for (int i = 0; i < clientsCount; i++) {
+                                    if (!threads.get(i).isAlive() && threads.get(i) != null && !threads.get(i).isInterrupted()) {
+//                                if (clients.get(i).getClientsocket().isClosed()) {
+                                        clients.remove(i);
+                                        threads.remove(i);
+                                        System.out.println(userName + " has disconnected");
+                                        --clientsCount;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                newThread.start();
+                flagFirstRun=false;
+            }
         }
     }
 
@@ -91,7 +124,7 @@ public class PicrossServer {
     public static String sendClientsInfo() {
         StringBuilder str;
 
-        str = new StringBuilder("###################################\nCurrent Users Connected To Server\n###################################\n");
+        str = new StringBuilder("\n###################################\nCurrent Users Connected To Server\n###################################\n");
         for (int i = 0; i < clients.size(); i++) {
             str.append("User: ").append(i + 1).append("\tUser Name: ").append(clients.elementAt(i).getUserName()).append("\n");
         }
@@ -104,7 +137,7 @@ public class PicrossServer {
     }
 
     public static void sendMessageToAllAboutClients() {
-        System.out.println("clientsCount is: "+clientsCount);
+        System.out.println("clientsCount is: " + clientsCount);
         for (int i = 0; i < clientsCount; i++) {
             clients.elementAt(i).getOutSteam().println(clients);
         }
@@ -130,8 +163,10 @@ public class PicrossServer {
         private PicrossServer picrossServer;
         private int points;
         private int timeToFinish;
+        private Socket clientsocket;
 
-        public Client(Socket clientSocket, String userName, PicrossServer picrossServer) {
+        public Client(Socket clientSocket, String userName, PicrossServer picrossServer,Socket clientsocket) {
+            this.clientsocket=clientsocket;
             this.picrossServer = picrossServer;
             try {
                 outSteam = new PrintStream(clientSocket.getOutputStream());
@@ -144,8 +179,8 @@ public class PicrossServer {
                 System.err.println("Server was not able to get InputSteam for user " + userName);
             }
             this.userName = userName;
-            this.points=0;
-            this.timeToFinish=0;
+            this.points = 0;
+            this.timeToFinish = 0;
         }
 
         public PrintStream getOutSteam() {
@@ -173,7 +208,7 @@ public class PicrossServer {
 
         public void DisconnectUser() {
             System.out.println(userName + " has disconnected");
-           //PicrossServer.sendMessageToAllAboutClients();
+            //PicrossServer.sendMessageToAllAboutClients();
             PicrossServer.removeClient(this);
             PicrossServer.sendMessageToAll(userName + " has disconnected");
         }
@@ -202,22 +237,27 @@ public class PicrossServer {
         }
 
         private void sendScoreTable() {
-            Vector<Client> clients=PicrossServer.getClients();
+            Vector<Client> clients = PicrossServer.getClients();
             //clients=clients.sort();
             outSteam.println("\nPLAYER\tTIME\tSCORE\n===============================");
-            for (int i=0;i<clients.size();i++){
-                outSteam.println(clients.elementAt(i).getUserName()+"\t"+clients.elementAt(i).getTimeToFinish()+"\t"+clients.elementAt(i).getPoints());
+            for (int i = 0; i < clients.size(); i++) {
+                outSteam.println(clients.elementAt(i).getUserName() + "\t" + clients.elementAt(i).getTimeToFinish() + "\t" + clients.elementAt(i).getPoints());
             }
         }
 
-        public int getPoints(){
+        public int getPoints() {
             return points;
         }
-        public int getTimeToFinish(){
+
+        public int getTimeToFinish() {
             return timeToFinish;
         }
+
         public synchronized void sendGame() {
             outSteam.println(picrossServer.getCurrentGame());
+        }
+        public Socket getClientsocket(){
+            return clientsocket;
         }
 
         @Override
@@ -238,16 +278,16 @@ public class PicrossServer {
                     changeName(message);
                 } else if (message.equals("/get")) {
                     sendGame();
-                }else if(message.equals("/score")){
+                } else if (message.equals("/score")) {
                     sendScoreTable();
-                }else if (message.equals("/bye")) {
+                } else if (message.equals("/bye")) {
                     DisconnectUser();
                     break;
                 } else {
                     PicrossServer.sendMessageToAll(userName + ": " + message);
                 }
             }
-            for (int i=0;i<clientsCount;i++){
+            for (int i = 0; i < clientsCount; i++) {
                 Vector<Client> clients = PicrossServer.getClients();
 
             }
