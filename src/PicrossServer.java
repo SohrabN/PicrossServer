@@ -204,7 +204,7 @@ public class PicrossServer {
         private void sendScoreTable() {
             Vector<Client> clients=PicrossServer.getClients();
             //clients=clients.sort();
-            outSteam.println("PLAYER\tTIME\tSCORE\n===============================");
+            outSteam.println("\nPLAYER\tTIME\tSCORE\n===============================");
             for (int i=0;i<clients.size();i++){
                 outSteam.println(clients.elementAt(i).getUserName()+"\t"+clients.elementAt(i).getTimeToFinish()+"\t"+clients.elementAt(i).getPoints());
             }
