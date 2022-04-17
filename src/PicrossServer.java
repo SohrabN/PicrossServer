@@ -432,10 +432,6 @@ public class PicrossServer {
                     PicrossServer.sendMessageToAll(userName + ": " + message);
                 }
             }
-            for (int i = 0; i < clientsCount; i++) {
-                Vector<Client> clients = PicrossServer.getClients();
-
-            }
         }
 
     }
