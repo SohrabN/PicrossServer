@@ -2,10 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fdd6ac69-b905-4204-af25-894fb632a6a7" name="Changes" comment="L1">
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Client.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/PicrossServer.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/PicrossServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]/Client.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]/PicrossServer.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PicrossServerOrg/PicrossServer.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PicrossServerOrg/out/production/PicrossServer/PircrossServer$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PicrossServerOrg/out/production/PicrossServer/PircrossServer$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PicrossServerOrg/out/production/PicrossServer/PircrossServer.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PicrossServerOrg/src/Client.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PicrossServerOrg/src/PicrossServer.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/PicrossServerOrg/src/PicrossServer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/PicrossServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PicrossServer.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,6 +71,9 @@
   </component>
   <component name="Push.Settings">
     <option name="SHOW_DETAILS_PANEL" value="false" />
+  </component>
+  <component name="ReaderModeSettings">
+    <option name="showRenderedDocs" value="false" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">

@@ -254,7 +254,10 @@ public class PicrossServer {
         }
 
         public synchronized void sendGame() {
-            outSteam.println(picrossServer.getCurrentGame());
+            if (picrossServer.getCurrentGame()!=null)
+                outSteam.println(picrossServer.getCurrentGame());
+            else
+                outSteam.println("No game currently in the server!\nPlease upload a game by compeleting one or /upload command.");
         }
         public Socket getClientsocket(){
             return clientsocket;
