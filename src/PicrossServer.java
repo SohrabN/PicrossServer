@@ -1,28 +1,82 @@
+/**
+ * @author Sohrab Najafzadeh
+ * Student Number 040770197
+ * Course: CST8221 - Java Applications
+ * CET-CS-Level 4
+ * @Version 3.0
+ */
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
+/**
+ * This class represents our Picross server which Picross clients use to connect to and communicate.
+ */
 public class PicrossServer {
-    private static final Vector<Client> clients = new Vector<Client>(); /*list of users on open ports*/
+
+    /**
+     * Vector of Client object which will be used to store each Client object where each one represents one client connected to server.
+     */
+    private static final Vector<Client> clients = new Vector<Client>();
+
+    /**
+     * Vector of Thread which each one will hold a Client.
+     */
     private static final Vector<Thread> threads = new Vector<Thread>();
+
+    /**
+     * Represents server socket.
+     */
     private static ServerSocket serverSocket;
+
+    /**
+     * Represents total of connection made to server.
+     */
     private int count = 1;
+
+    /**
+     * Represents the current game that server gets from client and saves.
+     */
     private String currentGame;
+
+    /**
+     * Represents the current connected clients to server.
+     */
     private static int clientsCount = 0;
+
+    /**
+     * Represents the client socket.
+     */
     private static Socket clientSocket = null;
+
+    /**
+     * A boolean flag to run a section only on first run.
+     */
     private static boolean flagFirstRun = true;
 
+    /**
+     * Getter for clients.
+     * @return clients which is Vector of Client class.
+     */
     public static Vector<Client> getClients() {
         return clients;
     }
 
+    /**
+     * Getter for clientSocket.
+     * @return clientSocket represents the socket connection to client.
+     */
     public static Socket getClientSocket() {
         return clientSocket;
     }
 
+    /**
+     * main method that is the beginning of the program.
+     * @param args represents the args passed to the program.
+     */
     public static void main(String[] args) {
 
-        //Vector<Thread> clients = new Vector<Thread>();
         int defaultPortNum = 61001;
         boolean defaultPort = true;
         try {
@@ -57,6 +111,9 @@ public class PicrossServer {
         }
     }
 
+    /**
+     * This method will start the server and set up the initial configuration.
+     */
     public void startServer() {
         while (true) {
             try {
@@ -75,7 +132,7 @@ public class PicrossServer {
             System.out.println("Inbound connection #" + count);
             System.out.println(userName + " has connected.");
             sendMessageToAll("SERVER: " + userName + " has joined the server.");
-            Client newUser = new Client(clientSocket, userName, this,clientSocket);
+            Client newUser = new Client(clientSocket, userName, this);
             clients.add(newUser);
             clientsCount++;
             count++;
@@ -96,7 +153,6 @@ public class PicrossServer {
                             if (threads.size() != 0) {
                                 for (int i = 0; i < clientsCount; i++) {
                                     if (!threads.get(i).isAlive() && threads.get(i) != null && !threads.get(i).isInterrupted()) {
-//                                if (clients.get(i).getClientsocket().isClosed()) {
                                         clients.remove(i);
                                         threads.remove(i);
                                         System.out.println(userName + " has disconnected");
@@ -109,11 +165,15 @@ public class PicrossServer {
                     }
                 };
                 newThread.start();
-                flagFirstRun=false;
+                flagFirstRun = false;
             }
         }
     }
 
+    /**
+     * This method will send a message passed to it to all the clients connected to server.
+     * @param message Represents the string message entered by client.
+     */
     public static void sendMessageToAll(String message) {
         for (int i = 0; i < clients.size(); i++) {
             clients.elementAt(i).getOutSteam().println(message);
@@ -121,6 +181,10 @@ public class PicrossServer {
 
     }
 
+    /**
+     * This method will send the information about the clients connected to server.
+     * @return Returns a string which will be used in console output of Picross game.
+     */
     public static String sendClientsInfo() {
         StringBuilder str;
 
@@ -131,18 +195,28 @@ public class PicrossServer {
         return str.toString();
     }
 
+    /**
+     * This method receives a Client object and removes it from clients Vector.
+     * @param client Client object passed to method.
+     */
     public static void removeClient(Client client) {
         clients.remove(client);
         clientsCount--;
     }
 
+    /**
+     * This method will send message to all other clients when one gets disconnected from server.
+     */
     public static void sendMessageToAllAboutClients() {
-        System.out.println("clientsCount is: " + clientsCount);
         for (int i = 0; i < clientsCount; i++) {
             clients.elementAt(i).getOutSteam().println(clients);
         }
     }
 
+    /**
+     * This method will set up the currentGame when it receives a new game from client.
+     * @param message  Represents the string message entered by client.
+     */
     public void currentGame(String message) {
         System.out.println("New game received!");
         message = message.substring(0, message.indexOf("]"));
@@ -150,23 +224,62 @@ public class PicrossServer {
 
     }
 
+    /**
+     * Getter for currentGame.
+     * @return Return currentGame which holds the game saved on server.
+     */
     public synchronized String getCurrentGame() {
         return currentGame;
     }
 
-
+    /**
+     * This class represents each client that gets connected to server and methods that it will use.
+     */
     class Client implements Runnable {
 
+        /**
+         * Output from server to client.
+         */
         private PrintStream outSteam;
-        private InputStream inStream;
-        private String userName;
-        private PicrossServer picrossServer;
-        private int points;
-        private int timeToFinish;
-        private Socket clientsocket;
 
-        public Client(Socket clientSocket, String userName, PicrossServer picrossServer,Socket clientsocket) {
-            this.clientsocket=clientsocket;
+        /**
+         * Input from client to server.
+         */
+        private InputStream inStream;
+
+        /**
+         * Represents the username client.
+         */
+        private String userName;
+
+        /**
+         * Represents PicrossServer object for calling method from PicrossServer.
+         */
+        private PicrossServer picrossServer;
+
+        /**
+         * Represents points that user scored with game they have played.
+         */
+        private int points;
+
+        /**
+         * Represents the time that user has taken to finish the game.
+         */
+        private int timeToFinish;
+
+        /**
+         * Represents socket that client is communicating over it.
+         */
+        private final Socket clientsocket;
+
+        /**
+         * constructor for creating a new object of client.
+         * @param clientSocket Represents the client socket.
+         * @param userName Represents the username of client.
+         * @param picrossServer Represents the PicrossServer object.
+         */
+        public Client(Socket clientSocket, String userName, PicrossServer picrossServer) {
+            this.clientsocket = clientSocket;
             this.picrossServer = picrossServer;
             try {
                 outSteam = new PrintStream(clientSocket.getOutputStream());
@@ -183,15 +296,26 @@ public class PicrossServer {
             this.timeToFinish = 0;
         }
 
+        /**
+         * Getter for outSteam.
+         * @return Return outSteam which will be used for output from server to client.
+         */
         public PrintStream getOutSteam() {
             return this.outSteam;
         }
 
+        /**
+         * Getter for userName.
+         * @return Represents the username of client.
+         */
         public String getUserName() {
             return this.userName;
         }
 
-
+        /**
+         * This method will change the name of the client.
+         * @param userName Represents the new username of client.
+         */
         public void changeName(String userName) {
 
             String oldUserName = this.userName;
@@ -206,6 +330,9 @@ public class PicrossServer {
 
         }
 
+        /**
+         * This method will disconnect the user from server adn send message about it to all clients.
+         */
         public void DisconnectUser() {
             System.out.println(userName + " has disconnected");
             //PicrossServer.sendMessageToAllAboutClients();
@@ -213,6 +340,10 @@ public class PicrossServer {
             PicrossServer.sendMessageToAll(userName + " has disconnected");
         }
 
+        /**
+         * This method will receive the game from client.
+         * @param message Represents a string which is the message from client in this case message will be 1 and 0 in specific format which shows true and false buttons for game.
+         */
         public void getGame(String message) {
             picrossServer.currentGame(message);
             String tempMessage;
@@ -236,6 +367,9 @@ public class PicrossServer {
             sendScoreTable();
         }
 
+        /**
+         * This method will send the current score table to the client that have requested it.
+         */
         private void sendScoreTable() {
             Vector<Client> clients = PicrossServer.getClients();
             //clients=clients.sort();
@@ -245,24 +379,32 @@ public class PicrossServer {
             }
         }
 
-        public int getPoints() {
-            return points;
-        }
+        /**
+         * Getter for points.
+         * @return points which represents the score of client.
+         */
+        public int getPoints() {return points;}
 
+        /**
+         * Getter for timeToFinish.
+         * @return timeToFinish represents the time that user has taken to finish a game. if zero means user has not finished the game.
+         */
         public int getTimeToFinish() {
             return timeToFinish;
         }
 
+        /**
+         * This method will send the game to the client that has requested the game.
+         */
         public synchronized void sendGame() {
-            if (picrossServer.getCurrentGame()!=null)
-                outSteam.println(picrossServer.getCurrentGame());
+            if (picrossServer.getCurrentGame() != null) outSteam.println(picrossServer.getCurrentGame());
             else
                 outSteam.println("No game currently in the server!\nPlease upload a game by compeleting one or /upload command.");
         }
-        public Socket getClientsocket(){
-            return clientsocket;
-        }
 
+        /**
+         * This is the run method of this class since it implements runnable. This method will be run by Thread.
+         */
         @Override
         public void run() {
             String message;
