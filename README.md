@@ -7,4 +7,4 @@
 * @Version 3.0
 
 
-This is the Picross server which can be used for connecting Picross clients togheter.
+This is the Picross server that can be used for connecting Picross clients together.
